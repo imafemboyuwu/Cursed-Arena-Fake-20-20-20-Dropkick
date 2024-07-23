@@ -1,0 +1,55 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local runService = game:GetService("RunService")
+local userInputService = game:GetService("UserInputService")
+local camera = game.Workspace.CurrentCamera
+
+
+local startUpAnimId = "rbxassetid://17173442235"
+local moveAnimId = "rbxassetid://15544774865"
+
+local delayBeforeSecondAnim = 2
+
+local delayBeforeMoving = 0.5
+
+local startUpAnim = Instance.new("Animation")
+startUpAnim.AnimationId = startUpAnimId
+local startUpTrack = humanoid:LoadAnimation(startUpAnim)
+
+local moveAnim = Instance.new("Animation")
+moveAnim.AnimationId = moveAnimId
+local moveTrack = humanoid:LoadAnimation(moveAnim)
+
+local function playMoveAnim()
+    moveTrack:Play()
+    humanoid.WalkSpeed = 0 -- Disable default walking
+    
+    wait(delayBeforeMoving)
+    
+    local connection
+    connection = runService.Heartbeat:Connect(function()
+        local moveDirection = camera.CFrame.LookVector * 2 -- Adjust speed multiplier as needed
+        character:TranslateBy(moveDirection)
+    end)
+    
+    moveTrack.Stopped:Connect(function()
+        humanoid.WalkSpeed = 16 -- Reset to normal speed
+        connection:Disconnect()
+    end)
+end
+
+local function onKeyPress(input)
+    if input.KeyCode == Enum.KeyCode.Five then
+        startUpTrack:Play()
+        runService.Heartbeat:Wait(startUpTrack.Length - 0.5) -- Wait until the start-up animation is almost done
+        delayBeforeSecondAnim = delayBeforeSecondAnim or 0 -- Ensure delay is defined
+        delayBeforeSecondAnim = math.max(0, delayBeforeSecondAnim) -- Ensure non-negative delay
+        runService.Heartbeat:Wait(delayBeforeSecondAnim)
+        
+        playMoveAnim()
+    end
+end
+
+userInputService.InputBegan:Connect(onKeyPress)
